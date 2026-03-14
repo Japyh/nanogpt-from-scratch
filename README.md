@@ -1,17 +1,56 @@
-# nanogpt-from-scratch
+# nanoGPT From Scratch
 
-This repository documents my journey of rebuilding a GPT-style Transformer model from scratch while studying the architecture of modern Large Language Models (LLMs).
+Rebuilding a GPT-style Transformer model from the ground up to understand modern Large Language Models (LLMs) at an implementation level.
 
-The implementation is inspired by the excellent minimal implementation in nanoGPT by Andrej Karpathy, which provides a simple and efficient codebase for training and fine-tuning GPT models using PyTorch. The original project focuses on clarity and minimalism, making it easier to understand the internal mechanics of Transformer-based language models.
+This repository documents a hands-on learning journey through core GPT components, training dynamics, and text generation. The focus is on clarity, experimentation, and understanding how each part of the model contributes to final behavior.
 
-In this repository, I recreate and analyze the core components of the GPT architecture step-by-step, including:
+## Why This Repository Exists
+
+Reading about Transformers is useful, but implementing them from scratch makes the ideas stick.
+
+This project is inspired by Andrej Karpathy's excellent [nanoGPT](https://github.com/karpathy/nanoGPT), a minimal and elegant PyTorch codebase for GPT training and fine-tuning. Here, I recreate those ideas step-by-step in my own way to build intuition and practical understanding.
+
+## What I Am Building
+
+The repository covers the major building blocks of a decoder-only GPT architecture:
 
 - Tokenization and dataset preparation
 - Transformer architecture (decoder-only)
 - Self-attention and multi-head attention
-- Positional encoding
-- Feed-forward networks
+- Positional encodings
+- Feed-forward networks (MLP blocks)
 - Training loops and optimization
 - Text generation (sampling / inference)
 
-The goal of this project is not only to implement a working GPT model, but also to deeply understand how Transformer-based language models work under the hood.
+## Project Goals
+
+- Build a working GPT-style language model end-to-end
+- Understand each component deeply, not just use it
+- Keep the implementation readable and easy to experiment with
+- Document lessons and insights during development
+
+## Learning-First Principles
+
+- Keep code simple before making it fast
+- Prefer explicit implementations over hidden abstractions
+- Validate understanding with small experiments
+- Iterate in small, testable steps
+
+## Roadmap
+
+- [x] Create repository and project direction
+- [ ] Add baseline data pipeline
+- [ ] Implement single-head attention
+- [ ] Extend to multi-head self-attention
+- [ ] Build full decoder block stack
+- [ ] Add training script and evaluation metrics
+- [ ] Add sampling/inference demos
+- [ ] Compare model quality across experiments
+
+## Acknowledgments
+
+- Andrej Karpathy for the original [nanoGPT](https://github.com/karpathy/nanoGPT) and educational resources
+
+---
+
+If you are learning Transformers too, feel free to follow along, fork the repo, and experiment.
