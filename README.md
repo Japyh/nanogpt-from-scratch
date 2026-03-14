@@ -36,17 +36,6 @@ The repository covers the major building blocks of a decoder-only GPT architectu
 - Validate understanding with small experiments
 - Iterate in small, testable steps
 
-## Roadmap
-
-- [x] Create repository and project direction
-- [ ] Add baseline data pipeline
-- [ ] Implement single-head attention
-- [ ] Extend to multi-head self-attention
-- [ ] Build full decoder block stack
-- [ ] Add training script and evaluation metrics
-- [ ] Add sampling/inference demos
-- [ ] Compare model quality across experiments
-
 ## Acknowledgments
 
 - Andrej Karpathy for the original [nanoGPT](https://github.com/karpathy/nanoGPT) and educational resources
