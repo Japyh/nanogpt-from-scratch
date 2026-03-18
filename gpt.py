@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+# ----------------------------------------------------------------------------
+# Training configuration
+# ----------------------------------------------------------------------------
 # hyperparameters
 batch_size = 64 # how many independent sequences will we process in parallel?
 block_size = 256 # what is the maximum context length for predictions?
@@ -18,6 +21,9 @@ dropout = 0.2
 
 torch.manual_seed(1337)
 
+# ----------------------------------------------------------------------------
+# Data loading + character-level tokenizer
+# ----------------------------------------------------------------------------
 # wget https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt
 with open('input.txt', 'r', encoding='utf-8') as f:
     text = f.read()
@@ -39,7 +45,8 @@ val_data = data[n:]
 
 # data loading
 def get_batch(split):
-    # generate a small batch of data of inputs x and targets y
+    # Sample random contiguous chunks.
+    # x is the input sequence and y is x shifted by one character.
     data = train_data if split == 'train' else val_data
     ix = torch.randint(len(data) - block_size, (batch_size,))
     x = torch.stack([data[i:i+block_size] for i in ix])
@@ -49,6 +56,7 @@ def get_batch(split):
 
 @torch.no_grad()
 def estimate_loss():
+    # Switch to eval mode so dropout is disabled for stable loss estimates.
     out = {}
     model.eval()
     for split in ['train', 'val']:
@@ -79,12 +87,13 @@ class Head(nn.Module):
         B,T,C = x.shape
         k = self.key(x)   # (B,T,hs)
         q = self.query(x) # (B,T,hs)
-        # compute attention scores ("affinities")
+        # Attention score matrix: each token scores every previous token.
         wei = q @ k.transpose(-2,-1) * k.shape[-1]**-0.5 # (B, T, hs) @ (B, hs, T) -> (B, T, T)
+        # Causal mask prevents looking into the future.
         wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf')) # (B, T, T)
         wei = F.softmax(wei, dim=-1) # (B, T, T)
         wei = self.dropout(wei)
-        # perform the weighted aggregation of the values
+        # Weighted sum of value vectors gives contextualized token features.
         v = self.value(x) # (B,T,hs)
         out = wei @ v # (B, T, T) @ (B, T, hs) -> (B, T, hs)
         return out
@@ -99,6 +108,7 @@ class MultiHeadAttention(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
+        # Concatenate all heads, then project back to embedding size.
         out = torch.cat([h(x) for h in self.heads], dim=-1)
         out = self.dropout(self.proj(out))
         return out
@@ -131,6 +141,7 @@ class Block(nn.Module):
         self.ln2 = nn.LayerNorm(n_embd)
 
     def forward(self, x):
+        # Pre-norm Transformer block with residual connections.
         x = x + self.sa(self.ln1(x))
         x = x + self.ffwd(self.ln2(x))
         return x
@@ -139,11 +150,14 @@ class GPTLanguageModel(nn.Module):
 
     def __init__(self):
         super().__init__()
-        # each token directly reads off the logits for the next token from a lookup table
+        # Token embeddings map token IDs -> dense vectors.
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
+        # Positional embeddings inject token order information.
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
+        # Stack of Transformer blocks.
         self.blocks = nn.Sequential(*[Block(n_embd, n_head=n_head) for _ in range(n_layer)])
         self.ln_f = nn.LayerNorm(n_embd) # final layer norm
+        # Language-model head projects hidden states -> vocabulary logits.
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
         # better init, not covered in the original GPT video, but important, will cover in followup video
@@ -171,6 +185,7 @@ class GPTLanguageModel(nn.Module):
         if targets is None:
             loss = None
         else:
+            # Flatten time and batch dims so cross entropy can be computed in one call.
             B, T, C = logits.shape
             logits = logits.view(B*T, C)
             targets = targets.view(B*T)
@@ -183,7 +198,7 @@ class GPTLanguageModel(nn.Module):
         for _ in range(max_new_tokens):
             # crop idx to the last block_size tokens
             idx_cond = idx[:, -block_size:]
-            # get the predictions
+            # Run a forward pass for the current context window.
             logits, loss = self(idx_cond)
             # focus only on the last time step
             logits = logits[:, -1, :] # becomes (B, C)
@@ -203,6 +218,9 @@ print(sum(p.numel() for p in m.parameters())/1e6, 'M parameters')
 # create a PyTorch optimizer
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
+# ----------------------------------------------------------------------------
+# Training loop
+# ----------------------------------------------------------------------------
 for iter in range(max_iters):
 
     # every once in a while evaluate the loss on train and val sets
@@ -219,6 +237,9 @@ for iter in range(max_iters):
     loss.backward()
     optimizer.step()
 
+# ----------------------------------------------------------------------------
+# Inference / text generation
+# ----------------------------------------------------------------------------
 # generate from the model
 context = torch.zeros((1, 1), dtype=torch.long, device=device)
 print(decode(m.generate(context, max_new_tokens=500)[0].tolist()))
